@@ -1,0 +1,80 @@
+##--------------------Install Packages-------------------##
+import pandas as pd
+import numpy as np
+import os
+import matplotlib.pyplot as plt
+
+##-------------------------Set Directory------------------##
+os.chdir(r'---path----')
+
+##-----------------------Reading Newhire File-------------##
+file1=(r'file name.xlsx')
+x1=pd.ExcelFile(file1)
+df1=x1.parse('sheet1',skiprows=6)
+
+#---Filtering out the New Hires---#
+df1_new=df1[df1['Grand Total']<=32]
+df2=df1_new[df1_new['Aug.21']==1]
+
+#---Transposing the dataset---#
+df3=pd.melt(df2,id_vars=["Associate Corp ID","Work Location Country"],var_name="Month",value_name="Value")
+df3=df3.sort_values(["Associate Corp ID","Work Location Country"])
+
+##---------------------Reading Rate File & transposing--------------##
+file2=(r'path')
+x2=pd.ExcelFile(file2)
+df4=x2.parse('Sheet1',skiprows=6)
+df5=pd.melt(df4,id_vars=["Associate Corp ID"],var_name="Month",value_name="Value")
+df5=df5.sort_values(["Associate Corp ID"])
+
+##--------------------Joining New Hire & Rate Dataset--------------------##
+df_6=df3.merge(df5,on=['Associate Corp ID','Month'],how='left')
+df_7=df_6[df_6['Month']!='Grand Total']
+df_7.columns=['Associate Corp ID','Location','Month','HC','Rate','Tenure']
+
+##---------------------------Adding OT Data-------------------------------##
+file3=(r'path')
+x3=pd.ExcelFile(file3)
+df_8=x3.parse('Sheet1',skiprows=6)
+df_9=pd.melt(df_8,id_vars=["Associate Corp ID"],var_name="Month",value_name="Value")
+df_9=df_9.sort_values(["Associate Corp ID"])
+
+##-----------------------------Adding Utilization Data---------------------##
+file4=(r'path')
+x4=pd.ExcelFile(file4)
+df_10=x4.parse('Sheet1',skiprows=6)
+df_11=pd.melt(df_10,id_vars=["Associate Corp ID"],var_name="Month",value_name="Value")
+df_11=df_11.sort_values(["Associate Corp ID"])
+
+##-------------------------Merge OT & Utilization Data to Volume & Rate Data-------------------------##
+df_12=df_7.merge(df_9,on=['Associate Corp ID','Month'],how='left')
+df_13=df_12.merge(df_11,on=['Associate Corp ID','Month'],how='left')
+df_13.columns=['Associate Corp ID','Location','Month','HC','Rate','Tenure','Overtime','Utilization']
+df_13.fillna(0,inplace=True)
+
+##-----------------------Scatter Plot- Tenure vs Rate------------------------------------##
+plt.scatter(df_13['Tenure'],df_13['Rate'],color='green')
+plt.ylim([0,5])
+plt.xlim([0,20])
+plt.xlabel('Tenure in Months')
+plt.ylabel('Rate')
+plt.title('Tenure Wise Associate Rate')
+plt.show()
+
+##-----------------------Scatter Plot- Tenure vs Overtime------------------------------------##
+plt.scatter(df_13['Tenure'],df_13['Overtime'],color='red')
+plt.ylim([0,5])
+plt.xlim([0,20])
+plt.xlabel('Tenure in Months')
+plt.ylabel('Overtime')
+plt.title('Tenure Wise Associate Overtime')
+plt.show()
+
+##-----------------------Scatter Plot- Tenure vs Utilization------------------------------------##
+plt.scatter(df_13['Tenure'],df_13['Utilization'],color='brown')
+plt.ylim([0,5])
+plt.xlim([0,20])
+plt.xlabel('Tenure in Months')
+plt.ylabel('Utilization')
+plt.title('Tenure Wise Associate Utilization')
+plt.show()
